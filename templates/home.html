@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>文件服务器</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css"
+       integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+       crossorigin="anonymous">
+    <style type="text/css">
+        .big-border {background:#fff; margin:0 auto; padding:10px;}
+        body {background: #f3f3f3;}
+        .page-title {text-align: center;}  
+		#tableFile {moz-user-select:-moz-none; -moz-user-select: none; -o-user-select:none; -khtml-user-select:none; -webkit-user-select:none; -ms-user-select:none; user-select:none; border-collapse:collapse; border-spacing:0; margin: 0; padding:0; width:800; text-align:center; margin:15px 0;}
+		#tableFile th {cursor: pointer; background: #eee; text-align:center}
+		#tableFile tr:nth-child(even) {background: #f9f9f9}
+		#tableFile th,#tableFile td {padding: 10px; border:0px solid #ccc;}
+	</style> 
+</head>
+<body>
+  <div class="big-border">
+    <h3 class="page-title">文件服务器</h3>
+    <hr>
+	<h4>上传文件</h4>
+	<form action = "/upload" method = "POST" enctype = "multipart/form-data">
+		<input type="file" name="selectfile" multiple/>
+		<input type="submit"/>
+    </form>
+	<hr>
+	<h4>当前目录 {{ossep+rel_dir_path}}</h4>
+    <table id="tableFile" width="800">
+      <thead>
+        <tr>
+          <th data-type="string">名称</th>
+          <th data-type="string">修改时间</th>
+		  <th data-type="string">类型</th>
+          <th data-type="string">大小</th>
+		  <th data-type="string">删除</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if rel_dir_path %}
+        <tr>
+          <td align="left"><a href="{{ url_for('ListDir', rel_path=rel_parent_dir_path) }}">..{{ossep}}</a></td>
+          <td></td>
+		  <td>文件夹</td>
+          <td></td>
+		  <td></td>
+        </tr>
+        {% endif %}
+        {% for i in contents %}
+        <tr>
+          <td align="left"><a href="{{ url_for('ListDir', rel_path=rel_dir_path+i.name) }}">{{ i.name }}</a></td>
+          <td>{{ i.mtime }}</td>
+		  <td>{{ i.type }}</td>
+          <td>{{ i.size }}</td>
+		  <td><a href="{{ url_for('Delete', rel_path=rel_dir_path+i.name) }}">x</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+	<hr>
+	<div>{{ contents | length }} 个项目</div>
+  </div>
+  
+	<script>
+		/*按列排序*/
+		;(function(){
+			var tbody = document.querySelector('#tableFile').tBodies[0];
+			var th = document.querySelector('#tableFile').tHead.rows[0].cells;
+			var td = tbody.rows;
+			for(var i = 0;i < th.length;i++){
+			  th[i].flag = 1;
+			  th[i].onclick = function(){
+				sort(this.getAttribute('data-type'), this.flag, this.cellIndex);
+				this.flag = -this.flag;
+			  };
+			};
+
+			function sort(str, flag, n){
+			  var arr = [];
+			  for(var i = 0;i < td.length;i++){
+				arr.push(td[i]);
+			  };
+			  arr.sort(function(a,b){
+				return method(str,a.cells[n].innerHTML,b.cells[n].innerHTML) * flag;
+			  });
+			  for(var i = 0;i < arr.length;i++){
+				tbody.appendChild(arr[i]);
+			  };
+			};
+			function method(str, a, b){
+			  switch(str){
+			  /*数字*/
+			  case 'num':
+				return a-b;
+				break;
+			  /*数字*/
+			  case 'string': 
+				return a.localeCompare(b);
+				break;
+			  /*日期*/
+			  default:
+				return new Date(a.split('-').join('/')).getTime()-new Date(b.split('-').join('/')).getTime();
+			  };
+			};
+		})();
+	</script>
+</body>
+</html>
